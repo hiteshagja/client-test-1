@@ -20,6 +20,14 @@ import TextField from '@material-ui/core/TextField';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert from '@material-ui/lab/Alert';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
+import { useTheme } from '@material-ui/core/styles';
+import moment from 'moment';
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -109,7 +117,6 @@ const App = () => {
   };
 
   //DATE
-
   const [selectedDate, setSelectedDate] = React.useState(new Date());
 
   const handleDateChange = date => {
@@ -117,35 +124,64 @@ const App = () => {
   };
 
   //TEXTINPUT
-
   const [textValue, setTextValue] = React.useState('');
+
+  const handleTextChange = event => {
+    setTextValue(event.target.value);
+  };
 
   //isLoading
   const [isLoading, setIsLoading] = React.useState(false);
 
-  //snakebar
-  const [open, setOpen] = React.useState(false);
+  //snakebar for Date error
+  const [isDateError, setIsDateError] = React.useState(false);
 
-  const handleClick = () => {
-    setOpen(true);
+  const handleDateError = isOpen => {
+    setIsDateError(isOpen);
   };
 
-  const handleClose = (event, reason) => {
-    setOpen(false);
+  //snakebar for TextArea error
+  const [isTextInputError, setIsTextInputError] = React.useState(false);
+
+  const handleTextInputError = isOpen => {
+    setIsTextInputError(isOpen);
+  };
+
+  //Modal if success
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const [isSuccessRegistration, setIsSuccessRegistration] = React.useState(
+    false,
+  );
+
+  const handleRegistrationDialog = isOpen => {
+    setIsSuccessRegistration(isOpen);
   };
 
   //SUBMIT FORM
   const submitForm = () => {
     setIsLoading(true);
     setTimeout(() => {
-      let selectedCourseName = courseData.find(e => e.id === value).name,
-        selectedSubjectName = subjectData
-          .find(e => e.id === value)
-          .values.find(e => e.id === subject).name;
+      let formatedDate = moment(selectedDate).format('DD/MM/YYYY'),
+        validDates = ['20/12/2019', '15/01/2020', '01/02/2020'];
 
-      // setOpen(true);
+      if (!validDates.includes(formatedDate)) {
+        handleDateError(true);
+      } else if (
+        (textValue.trim() && textValue.trim().length < 20) ||
+        textValue.length > 500
+      ) {
+        handleTextInputError(true);
+      } else {
+        setValue(1);
+        setSubject(1);
+        setSelectedDate(new Date());
+        setTextValue('');
+        handleRegistrationDialog(true);
+      }
       setIsLoading(false);
-    }, 5000);
+    }, 2500);
   };
 
   return (
@@ -178,7 +214,7 @@ const App = () => {
         <InputLabel id="demo-simple-select-label">Subject</InputLabel>
 
         {subjectData.map((e, i) => {
-          if (e.id == value) {
+          if (e.id === value) {
             return (
               <Select
                 key={i}
@@ -196,7 +232,7 @@ const App = () => {
                 })}
               </Select>
             );
-          }
+          } else return null;
         })}
       </FormControl>
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -223,19 +259,55 @@ const App = () => {
           multiline
           rows="4"
           defaultValue={textValue}
-          onChange={event => setTextValue(event.target.value)}
+          onChange={event => handleTextChange(event)}
         />
       </FormControl>
-      <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
-        <Alert onClose={handleClose} severity="success">
-          This is a success message!
+      <Snackbar
+        open={isDateError}
+        autoHideDuration={7000}
+        onClose={() => handleDateError(false)}
+      >
+        <Alert onClose={() => handleDateError(false)} severity="error">
+          Your selected course and subject is not offered beginning from your
+          selected date.
         </Alert>
       </Snackbar>
+      <Snackbar
+        open={isTextInputError}
+        autoHideDuration={7000}
+        onClose={() => handleTextInputError(false)}
+      >
+        <Alert onClose={() => handleTextInputError(false)} severity="error">
+          Additional Notes length should be above 20 or below 500.
+        </Alert>
+      </Snackbar>
+      <Dialog
+        fullScreen={fullScreen}
+        open={isSuccessRegistration}
+        onClose={() => setIsSuccessRegistration(false)}
+        aria-labelledby="responsive-dialog-title"
+      >
+        <DialogTitle id="responsive-dialog-title">{'SUCCESS!'}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Your course has been successfully registered.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setIsSuccessRegistration(false)}
+            color="primary"
+            autoFocus
+          >
+            Okay
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Button
         onClick={() => submitForm()}
         variant="contained"
         color={isLoading ? 'default' : 'primary'}
-        style={{ margin: 8 }}
+        className="submitButton"
         disabled={isLoading}
       >
         {isLoading ? <CircularProgress size={24} color="primary" /> : 'SUBMIT'}

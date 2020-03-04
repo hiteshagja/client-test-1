@@ -31,7 +31,12 @@
 .mainWrap {
   width: 35%;
   margin: auto;
-  padding: 20;
+  padding: 20px;
+}
+
+.submitButton {
+  width: 100px;
+  margin: 8px !important;
 }
 
 @keyframes App-logo-spin {
